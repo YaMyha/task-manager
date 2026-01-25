@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: task_postgres
+    environment:
+      POSTGRES_USER: task
+      POSTGRES_PASSWORD: task
+      POSTGRES_DB: task_manager
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
