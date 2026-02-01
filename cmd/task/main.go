@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"task-manager/internal/storage"
 	"task-manager/internal/task"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
@@ -16,7 +19,16 @@ func main() {
 	command := os.Args[1]
 	title := os.Args[2]
 
-	repo := storage.NewJSONStorage("data/tasks.json")
+	db, err := pgxpool.New(context.Background(),
+		"postgres://task:task@localhost:5434/task_manager")
+	if err != nil {
+		fmt.Println("DB connection error:", err)
+		return
+	}
+
+	defer db.Close()
+
+	repo := storage.NewPostgresStorage(db)
 	service := task.NewService(repo)
 
 	switch command {
