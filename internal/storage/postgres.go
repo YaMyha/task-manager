@@ -16,13 +16,17 @@ func NewPostgresStorage(db *pgxpool.Pool) *PostgresStorage {
 }
 
 func (p *PostgresStorage) GetAll() ([]task.Task, error) {
+	// Make a query to database
+	// Retrieve all tasks from the PostgreSQL database
 	rows, err := p.db.Query(context.Background(),
 		`SELECT id, title, done FROM tasks ORDER BY id`,
 	)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() // defer closing connection after function execution
+
+	// Iterate over the rows and build the tasks list
 
 	var tasks []task.Task
 	for rows.Next() {
@@ -32,20 +36,21 @@ func (p *PostgresStorage) GetAll() ([]task.Task, error) {
 		}
 		tasks = append(tasks, t)
 	}
-
+	// Return the list of tasks and any error encountered during iteration
+	// We don't rely only on errors from Query or Scan but also check for errors during rows iteration
 	return tasks, rows.Err()
 }
 
 func (p *PostgresStorage) Save(tasks []task.Task) error {
-	ctx := context.Background()
+	ctx := context.Background() // use a background context for DB operations
 
-	tx, err := p.db.Begin(ctx)
+	tx, err := p.db.Begin(ctx) // start a transaction
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(ctx) // ensure rollback if not committed
 
-	_, err = tx.Exec(ctx, `TRUNCATE TABLE tasks`)
+	_, err = tx.Exec(ctx, `TRUNCATE TABLE tasks`) // clear existing tasks
 	if err != nil {
 		return err
 	}
@@ -60,5 +65,5 @@ func (p *PostgresStorage) Save(tasks []task.Task) error {
 		}
 	}
 
-	return tx.Commit(ctx)
+	return tx.Commit(ctx) // commit the transaction
 }
